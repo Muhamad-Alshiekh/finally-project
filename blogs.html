@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Blog - Dar al-Kutub</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <!-- Header Section -->
+    <header id="header" class="site-header">
+      <div class="top-info border-bottom d-none d-md-block">
+        <div class="container-fluid">
+          <div class="row g-0">
+            <div class="col-md-4">
+              <p class="fs-6 my-2 text-center">Need any help? Call us <a href="#">112233344455</a></p>
+            </div>
+            <div class="col-md-4 border-start border-end">
+              <p class="fs-6 my-2 text-center">Summer sale discount off 60% off! <a class="text-decoration-underline" href="index.html">Shop Now</a></p>
+            </div>
+            <div class="col-md-4">
+              <p class="fs-6 my-2 text-center">2-3 business days delivery & free returns</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <nav id="header-nav" class="navbar navbar-expand-lg py-3">
+        <div class="container">
+          <a class="navbar-brand logo-text" href="index.html">
+            <span class="logo-icon">📚</span> Dar al-Kutub
+          </a>
+          <button class="navbar-toggler d-flex d-lg-none order-3 p-2" type="button" data-bs-toggle="offcanvas"
+            data-bs-target="#bdNavbar" aria-controls="bdNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <svg class="navbar-icon">
+              <use xlink:href="#navbar-icon"></use>
+            </svg>
+          </button>
+          <div class="offcanvas offcanvas-end" tabindex="-1" id="bdNavbar" aria-labelledby="bdNavbarOffcanvasLabel">
+            <div class="offcanvas-header px-4 pb-0">
+              <a class="navbar-brand logo-text" href="index.html">
+                <span class="logo-icon">📚</span> Dar al-Kutub
+              </a>
+              <button type="button" class="btn-close btn-close-black" data-bs-dismiss="offcanvas" aria-label="Close"
+                data-bs-target="#bdNavbar"></button>
+            </div>
+            <div class="offcanvas-body">
+              <ul id="navbar"
+                class="navbar-nav text-uppercase justify-content-start justify-content-lg-center align-items-start align-items-lg-center flex-grow-1">
+                <li class="nav-item">
+                  <a class="nav-link me-4" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link me-4" href="about.html">About</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link me-4" href="shop.html">Shop</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link me-4 active" href="blogs.html">Blogs</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link me-4" href="contact.html">Contact</a>
+                </li>
+              </ul>
+              <div class="user-items d-flex">
+                <ul class="d-flex justify-content-end list-unstyled mb-0">
+                  <li class="search-item pe-3">
+                    <a href="#" class="search-button">
+                      <svg class="search">
+                        <use xlink:href="#search"></use>
+                      </svg>
+                    </a>
+                  </li>
+                  <li class="pe-3">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                      <svg class="user">
+                        <use xlink:href="#user"></use>
+                      </svg>
+                    </a>
+                  </li>
+                  <li class="wishlist-dropdown dropdown pe-3">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                      <svg class="wishlist">
+                        <use xlink:href="#heart"></use>
+                      </svg>
+                    </a>
+                  </li>
+                  <li class="cart-dropdown dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                      <svg class="cart">
+                        <use xlink:href="#cart"></use>
+                      </svg>
+                      <span class="fs-6 fw-light">(02)</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Blog Hero Section -->
+    <section class="hero-section py-5" style="background: linear-gradient(rgba(139, 38, 53, 0.8), rgba(26, 26, 46, 0.9)), url('images/category2.jpg'); background-size: cover; background-position: center;">
+      <div class="container">
+        <div class="row align-items-center" style="min-height: 250px;">
+          <div class="col-md-12 text-center text-white">
+            <h1 class="display-4 text-white">Our Blog</h1>
+            <p class="lead text-white-50">Stories, Reviews, and Literary Insights</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog Posts -->
+    <section class="blog-posts padding-large">
+      <div class="container">
+        <div class="row">
+          <!-- Main Content -->
+          <div class="col-lg-8">
+            <!-- Featured Post -->
+            <article class="blog-post mb-5">
+              <div class="post-thumbnail">
+                <img src="images/post-item5.jpg" alt="Blog Post" class="img-fluid rounded">
+              </div>
+              <div class="post-content mt-4">
+                <div class="post-meta mb-2">
+                  <span class="post-date">December 5, 2025</span>
+                  <span class="post-category">Literature</span>
+                </div>
+                <h2 class="post-title">The Evolution of Arabic Literature</h2>
+                <p class="post-excerpt">Discover the rich history of Arabic literature through the ages and its influence on modern writing...</p>
+                <a href="#" class="btn btn-primary">Read More</a>
+              </div>
+            </article>
+
+            <!-- Regular Posts -->
+            <div class="row">
+              <div class="col-md-6">
+                <article class="blog-post mb-4">
+                  <div class="post-thumbnail">
+                    <img src="images/post-item6.jpg" alt="Blog Post" class="img-fluid rounded">
+                  </div>
+                  <div class="post-content mt-3">
+                    <div class="post-meta mb-2">
+                      <span class="post-date">December 4, 2025</span>
+                      <span class="post-category">Reviews</span>
+                    </div>
+                    <h3 class="post-title">Top 10 Books of the Month</h3>
+                    <p class="post-excerpt">Our curated selection of must-read books for this month...</p>
+                    <a href="#" class="btn btn-outline-primary">Read More</a>
+                  </div>
+                </article>
+              </div>
+              <div class="col-md-6">
+                <article class="blog-post mb-4">
+                  <div class="post-thumbnail">
+                    <img src="images/post-item7.jpg" alt="Blog Post" class="img-fluid rounded">
+                  </div>
+                  <div class="post-content mt-3">
+                    <div class="post-meta mb-2">
+                      <span class="post-date">December 3, 2025</span>
+                      <span class="post-category">Authors</span>
+                    </div>
+                    <h3 class="post-title">Interview with Rising Authors</h3>
+                    <p class="post-excerpt">Meet the new voices shaping contemporary literature...</p>
+                    <a href="#" class="btn btn-outline-primary">Read More</a>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <nav class="mt-5">
+              <ul class="pagination justify-content-center">
+                <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">Next</a></li>
+              </ul>
+            </nav>
+          </div>
+
+          <!-- Sidebar -->
+          <div class="col-lg-4">
+            <!-- Search Widget -->
+            <div class="sidebar-widget search-widget mb-4">
+              <h4>Search</h4>
+              <form class="search-form">
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="Search posts...">
+                  <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Categories Widget -->
+            <div class="sidebar-widget categories-widget mb-4">
+              <h4>Categories</h4>
+              <ul class="list-unstyled">
+                <li><a href="#">Book Reviews <span>(15)</span></a></li>
+                <li><a href="#">Author Interviews <span>(8)</span></a></li>
+                <li><a href="#">Literary News <span>(12)</span></a></li>
+                <li><a href="#">Reading Tips <span>(6)</span></a></li>
+                <li><a href="#">Book Collections <span>(10)</span></a></li>
+              </ul>
+            </div>
+
+            <!-- Recent Posts Widget -->
+            <div class="sidebar-widget recent-posts-widget mb-4">
+              <h4>Recent Posts</h4>
+              <div class="recent-post d-flex align-items-center mb-3">
+                <img src="images/post-item8.jpg" alt="Recent Post" class="img-fluid rounded me-3" style="width: 80px; height: 60px; object-fit: cover;">
+                <div class="recent-post-content">
+                  <h6><a href="#">The Art of Slow Reading</a></h6>
+                  <span class="post-date">December 1, 2025</span>
+                </div>
+              </div>
+              <!-- More recent posts -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer" class="padding-large">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-3 mb-4">
+            <div class="footer-menu">
+              <h5 class="widget-title">Quick Links</h5>
+              <ul class="menu-list list-unstyled">
+                <li class="menu-item">
+                  <a href="about.html">About us</a>
+                </li>
+                <li class="menu-item">
+                  <a href="shop.html">Shop</a>
+                </li>
+                <li class="menu-item">
+                  <a href="contact.html">Contact us</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-3 mb-4">
+            <div class="footer-menu">
+              <h5 class="widget-title">Customer Service</h5>
+              <ul class="menu-list list-unstyled">
+                <li class="menu-item">
+                  <a href="#">FAQ</a>
+                </li>
+                <li class="menu-item">
+                  <a href="#">Shipping & Returns</a>
+                </li>
+                <li class="menu-item">
+                  <a href="#">Terms & Conditions</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-3 mb-4">
+            <div class="footer-menu">
+              <h5 class="widget-title">Contact Us</h5>
+              <p>123 Book Street<br>Literary District<br>Dubai, UAE</p>
+              <p>Email: info@daralkutub.com<br>Phone: +971 4 123 4567</p>
+            </div>
+          </div>
+          <div class="col-md-3 mb-4">
+            <div class="footer-menu">
+              <h5 class="widget-title">Follow Us</h5>
+              <div class="social-links">
+                <ul class="d-flex list-unstyled">
+                  <li class="ms-3">
+                    <a href="#">
+                      <svg class="facebook">
+                        <use xlink:href="#facebook"></use>
+                      </svg>
+                    </a>
+                  </li>
+                  <li class="ms-3">
+                    <a href="#">
+                      <svg class="instagram">
+                        <use xlink:href="#instagram"></use>
+                      </svg>
+                    </a>
+                  </li>
+                  <li class="ms-3">
+                    <a href="#">
+                      <svg class="twitter">
+                        <use xlink:href="#twitter"></use>
+                      </svg>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/jquery-1.11.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>
