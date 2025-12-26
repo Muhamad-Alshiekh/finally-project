@@ -1,5 +1,5 @@
 // Chatbot Configuration
-const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY = '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';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 const MODEL = 'openai/gpt-4o-mini';
 
@@ -333,3 +333,4 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
