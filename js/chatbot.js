@@ -1,5 +1,5 @@
 // Chatbot Configuration
-const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY = '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';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 const MODEL = 'openai/gpt-4o-mini';
 
@@ -194,9 +194,10 @@ async function sendMessage() {
         });
 
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Chatbot Error:', error);
         hideTypingIndicator();
-        addMessageToUI('عذراً، حدث خطأ. يرجى المحاولة مرة أخرى. / Sorry, an error occurred. Please try again.', 'bot');
+        const errorMsg = error.message || 'Unknown error';
+        addMessageToUI(`عذراً، حدث خطأ: ${errorMsg} / Sorry, error: ${errorMsg}`, 'bot');
     }
 }
 
@@ -268,11 +269,18 @@ async function callOpenRouterAPI(messages) {
         })
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        console.error('API Error Response:', data);
+        throw new Error(data.error?.message || `API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    if (!data.choices || !data.choices[0]) {
+        console.error('Invalid API Response:', data);
+        throw new Error('Invalid response from API');
+    }
+    
     return data.choices[0].message.content;
 }
 
