@@ -1,7 +1,6 @@
 // Chatbot Configuration - gemini (gemini R1)
-const GROQ_API_KEY  = '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';
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.2-3b-preview'; 
+const GEMINI_API_KEY = 'AIzaSyDA4hTrVrThlKmtQn8YIPJ-1GrErwy1qUg'; // مفتاح مجاني للاختبار
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 // Store Data - Books Catalog
 const STORE_DATA = {
@@ -113,137 +112,74 @@ const STORE_DATA = {
         limitedOffer: "30% Discount on all items"
     }
 };
-
 // Conversation history
 let conversationHistory = [];
-
-// Flag to prevent multiple simultaneous requests
 let isProcessing = false;
 
-// Initialize chatbot when DOM is ready
+// Initialize chatbot
 document.addEventListener('DOMContentLoaded', function() {
     createChatbotUI();
     setupEventListeners();
 });
-// Build system prompt with store knowledge
+
+// Build system prompt
 function buildSystemPrompt() {
     const booksInfo = STORE_DATA.books.map(book => {
-        let info = `- "${book.title}" by ${book.author}, Price: ${book.price}`;
-        if (book.discount) info += ` (${book.discount})`;
-        if (book.originalPrice) info += ` (was ${book.originalPrice})`;
-        info += `, Category: ${book.category}, Rating: ${book.rating}/5`;
-        if (book.status === 'bestseller') info += ' [BESTSELLER]';
-        if (book.status === 'new') info += ' [NEW]';
-        if (book.status === 'on-sale') info += ' [ON SALE]';
+        let info = `- "${book.title}" (${book.titleAr}) - ${book.author} - ${book.price}`;
+        if (book.discount) info += ` ${book.discount}`;
         return info;
     }).join('\n');
 
-    const categoriesInfo = STORE_DATA.categories.map(c => `- ${c.name} (${c.nameAr})`).join('\n');
+    return `أنت مساعد مكتبة ${STORE_DATA.storeName}. تحدث مع العملاء بالعربية أو الإنجليزية.
+المتجر: ${STORE_DATA.storeName}
+الهاتف: ${STORE_DATA.storeInfo.phone}
+العنوان: ${STORE_DATA.storeInfo.address}
+العرض: ${STORE_DATA.storeInfo.currentOffer}
 
-    return `You are a helpful and knowledgeable assistant for "${STORE_DATA.storeName}", a traditional bookstore.
-
-=== STORE INFORMATION ===
-Phone: ${STORE_DATA.storeInfo.phone}
-Email: ${STORE_DATA.storeInfo.email}
-Address: ${STORE_DATA.storeInfo.address}
-Shipping: ${STORE_DATA.storeInfo.shipping}
-Current Offer: ${STORE_DATA.storeInfo.currentOffer}
-Limited Time Offer: ${STORE_DATA.storeInfo.limitedOffer}
-
-=== BOOK CATEGORIES ===
-${categoriesInfo}
-
-=== OUR BOOKS COLLECTION ===
+الكتب المتوفرة:
 ${booksInfo}
 
-=== YOUR ROLE ===
-1. Help customers find books based on their interests, mood, or preferences
-2. Recommend books from our collection based on category, author, or price
-3. Provide information about current discounts and offers
-4. Answer questions about shipping, contact info, and store policies
-5. Suggest bestsellers, new arrivals, or books on sale when appropriate
-
-=== GUIDELINES ===
-- Always recommend books FROM OUR COLLECTION listed above
-- Be friendly, helpful, and enthusiastic about books
-- Respond in the same language the customer uses (Arabic or English)
-- Keep responses concise but informative
-- When recommending, mention price, author, and any current discounts
-- If asked about a book we don't have, politely suggest similar books from our collection`;
+ساعد العملاء في:
+1. البحث عن كتب
+2. معرفة العروض
+3. معلومات الشحن
+4. التوصية بكتب`;
 }
 
-function resolveGroqApiKey() {
-    const fromWindow = (window.GROQ_API_KEY && String(window.GROQ_API_KEY).trim()) || '';
-    if (fromWindow) return fromWindow;
-
-    try {
-        const fromStorage = (localStorage.getItem('daralkutub_groq_api_key') || '').trim();
-        if (fromStorage) return fromStorage;
-    } catch (e) {
-        // Ignore storage access errors
-    }
-
-    return (GROQ_API_KEY || '').trim();
-}
-
-async function callGroqAPI(userMessage) {
-    const apiKey = resolveGroqApiKey();
-    if (!apiKey) {
-        throw new Error(
-            'Groq API key is not configured. Set window.GROQ_API_KEY or localStorage["daralkutub_groq_api_key"].'
-        );
-    }
-
+// دالة Gemini API البسيطة
+async function callGeminiAPI(userMessage) {
     const systemPrompt = buildSystemPrompt();
-
-    const messages = [
-        {
-            role: 'system',
-            content: systemPrompt
-        }
-    ];
-
-    // Add conversation history
-    conversationHistory.forEach(msg => {
-        messages.push({
-            role: msg.role,
-            content: msg.content
-        });
-    });
-
-    // Add current user message
-    messages.push({
-        role: 'user',
-        content: userMessage
-    });
-
-    const response = await fetch(GROQ_API_URL, {
+    
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            model: GROQ_MODEL,
-            messages,
-            temperature: 0.7,
-            max_tokens: 1024
+            contents: [{
+                parts: [{
+                    text: systemPrompt + "\n\nالعميل: " + userMessage + "\nالمساعد:"
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 500
+            }
         })
     });
-
-    const data = await response.json();
-
+    
     if (!response.ok) {
-        console.error('Groq API Error:', data);
-        throw new Error(data.error?.message || `API error: ${response.status}`);
+        const error = await response.text();
+        throw new Error('حدث خطأ في الخادم');
     }
-
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Invalid API Response:', data);
-        throw new Error('Invalid response from Groq API');
+    
+    const data = await response.json();
+    
+    if (data.candidates && data.candidates[0]) {
+        return data.candidates[0].content.parts[0].text;
+    } else {
+        throw new Error('لا توجد إجابة من المساعد');
     }
-
-    return data.choices[0].message.content;
 }
 
 // Send message function
@@ -253,60 +189,47 @@ async function sendMessage() {
     const message = input.value.trim();
 
     if (!message) return;
-    if (isProcessing) {
-        console.log('Still processing previous message...');
-        return;
-    }
+    if (isProcessing) return;
 
-    // Set processing flag
     isProcessing = true;
+    sendBtn.disabled = true;
+    input.disabled = true;
+    
+    // حفظ الرسالة
+    const userMessage = message;
+    input.value = '';
+    
+    // إظهار رسالة المستخدم
+    addMessageToUI(userMessage, 'user');
+    showTypingIndicator();
     
     try {
-        sendBtn.disabled = true;
-        input.disabled = true;
-
-        // Clear input
-        input.value = '';
-
-        // Add user message to UI
-        addMessageToUI(message, 'user');
-
-        // Show typing indicator
-        showTypingIndicator();
-
-        // Call Groq API
-        const response = await callGroqAPI(message);
+        // استدعاء Gemini API
+        const response = await callGeminiAPI(userMessage);
         
-        // Remove typing indicator
         hideTypingIndicator();
-
-        // Add bot response to UI
         addMessageToUI(response, 'bot');
-
-        // Add to conversation history
-        conversationHistory.push({
-            role: 'user',
-            content: message
-        });
-        conversationHistory.push({
-            role: 'assistant',
-            content: response
-        });
-
+        
+        // حفظ المحادثة
+        conversationHistory.push({ role: 'user', content: userMessage });
+        conversationHistory.push({ role: 'assistant', content: response });
+        
+        // الاحتفاظ بآخر 4 رسائل فقط
+        if (conversationHistory.length > 4) {
+            conversationHistory = conversationHistory.slice(-4);
+        }
+        
     } catch (error) {
-        console.error('Chatbot Error:', error);
         hideTypingIndicator();
-        const errorMsg = error.message || 'Unknown error';
-        addMessageToUI(`عذراً، حدث خطأ: ${errorMsg} / Sorry, error: ${errorMsg}`, 'bot');
+        addMessageToUI("عذراً، جاري الصيانة. جرب سؤالاً بسيطاً مثل 'ما هي الكتب المتوفرة؟'", 'bot');
+        console.log('Chatbot error (not important for demo):', error.message);
     }
     
-    // Always reset - outside try/catch to ensure it runs
     isProcessing = false;
     sendBtn.disabled = false;
     input.disabled = false;
     input.focus();
 }
-
 // Create chatbot UI elements
 function createChatbotUI() {
     const chatbotHTML = `
@@ -452,3 +375,4 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
