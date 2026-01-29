@@ -172,25 +172,25 @@ ${booksInfo}
 - If asked about a book we don't have, politely suggest similar books from our collection`;
 }
 
-function resolveOpenRouterApiKey() {
-    const fromWindow = (window.OPENROUTER_API_KEY && String(window.OPENROUTER_API_KEY).trim()) || '';
+function resolveGroqApiKey() {
+    const fromWindow = (window.GROQ_API_KEY && String(window.GROQ_API_KEY).trim()) || '';
     if (fromWindow) return fromWindow;
 
     try {
-        const fromStorage = (localStorage.getItem(OPENROUTER_API_KEY_STORAGE_KEY) || '').trim();
+        const fromStorage = (localStorage.getItem('daralkutub_groq_api_key') || '').trim();
         if (fromStorage) return fromStorage;
     } catch (e) {
         // Ignore storage access errors
     }
 
-    return (OPENROUTER_API_KEY || '').trim();
+    return (GROQ_API_KEY || '').trim();
 }
 
-async function callOpenRouterAPI(userMessage) {
-    const apiKey = resolveOpenRouterApiKey();
+async function callGroqAPI(userMessage) {
+    const apiKey = resolveGroqApiKey();
     if (!apiKey) {
         throw new Error(
-            'OpenRouter API key is not configured. Set window.OPENROUTER_API_KEY or localStorage["daralkutub_openrouter_api_key"].'
+            'Groq API key is not configured. Set window.GROQ_API_KEY or localStorage["daralkutub_groq_api_key"].'
         );
     }
 
@@ -217,16 +217,14 @@ async function callOpenRouterAPI(userMessage) {
         content: userMessage
     });
 
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+    const response = await fetch(GROQ_API_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Dar al-Kutub Bookstore'
+            'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-            model: OPENROUTER_MODEL,
+            model: GROQ_MODEL,
             messages,
             temperature: 0.7,
             max_tokens: 1024
@@ -236,13 +234,13 @@ async function callOpenRouterAPI(userMessage) {
     const data = await response.json();
 
     if (!response.ok) {
-        console.error('OpenRouter API Error:', data);
+        console.error('Groq API Error:', data);
         throw new Error(data.error?.message || `API error: ${response.status}`);
     }
 
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         console.error('Invalid API Response:', data);
-        throw new Error('Invalid response from OpenRouter API');
+        throw new Error('Invalid response from Groq API');
     }
 
     return data.choices[0].message.content;
@@ -276,8 +274,8 @@ async function sendMessage() {
         // Show typing indicator
         showTypingIndicator();
 
-        // Call OpenRouter API
-        const response = await callOpenRouterAPI(message);
+        // Call Groq API
+        const response = await callGroqAPI(message);
         
         // Remove typing indicator
         hideTypingIndicator();
@@ -454,7 +452,3 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-
-
-
