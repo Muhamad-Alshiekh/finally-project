@@ -1,22 +1,23 @@
-// api/debug.js
+// api/debug.js - المحدث
 export default async function handler(req, res) {
   const key = process.env.GEMINI_KEY;
   const keyExists = !!key;
   const keyLength = key ? key.length : 0;
   
-  // اختبار الاتصال بالـ API مباشرة
-  let apiTest = { success: false, error: null };
+  // ✅ اختبار نموذج gemini-2.5-flash
+  const model = "gemini-2.5-flash";
+  let apiTest = { success: false, error: null, model: model };
   
   if (key) {
     try {
       const testResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
+        `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{
-              parts: [{ text: "Say hello" }]
+              parts: [{ text: "Say hello in Arabic" }]
             }]
           })
         }
@@ -26,7 +27,9 @@ export default async function handler(req, res) {
       apiTest = {
         success: testResponse.ok,
         status: testResponse.status,
-        data: testData
+        model: model,
+        data: testData,
+        responseText: testResponse.ok ? testData?.candidates?.[0]?.content?.parts?.[0]?.text : null
       };
     } catch (error) {
       apiTest.error = error.message;
@@ -45,6 +48,7 @@ export default async function handler(req, res) {
       k.includes('KEY')
     ),
     apiTest: apiTest,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    note: `Testing model: ${model}`
   });
 }
