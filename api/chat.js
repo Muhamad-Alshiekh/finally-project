@@ -6,22 +6,22 @@ export default async function handler(req, res) {
   const key = process.env.GEMINI_KEY;
 
   try {
+    // تم التغيير من v1beta إلى v1 واستخدام الموديل المستقر
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(req.body) // هذا هو المتهم الأول
+        body: JSON.stringify(req.body)
       }
     );
 
     const data = await response.json();
 
-    // إذا جوجل أرسلت خطأ، سنرسله للمتصفح لنعرف ما هو
     if (!response.ok) {
       return res.status(response.status).json({ 
         error: "Google API Error", 
-        message: data.error?.message || "Unknown Google Error",
+        message: data.error?.message || "Check your API Key and Model compatibility",
         details: data 
       });
     }
