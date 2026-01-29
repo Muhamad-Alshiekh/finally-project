@@ -67,23 +67,30 @@ ${booksInfo}
 async function callGeminiAPI(userMessage) {
     const systemPrompt = buildSystemPrompt();
 
-    const contents = conversationHistory.map(msg => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: String(msg.content || '') }]
-    }));
+    // نضع التعليمات كأول رسالة من المستخدم لضمان قبولها في كل الإصدارات
+    const contents = [
+        {
+            role: 'user',
+            parts: [{ text: `SYSTEM INSTRUCTIONS: ${systemPrompt}\n\nUSER MESSAGE: ${userMessage}` }]
+        }
+    ];
 
-    contents.push({
-        role: 'user',
-        parts: [{ text: String(userMessage || '') }]
-    });
+    // إذا كان هناك تاريخ للمحادثة، نضيفه هنا
+    if (conversationHistory.length > 0) {
+        conversationHistory.forEach(msg => {
+            contents.push({
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            });
+        });
+    }
 
     try {
         const res = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                contents,
+                contents, // نرسل المحتويات فقط هنا
                 generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
             })
         });
@@ -95,12 +102,10 @@ async function callGeminiAPI(userMessage) {
             throw new Error(data.error || "خطأ في السيرفر");
         }
 
-        // فحص دقيق لمكان النص في رد Gemini
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!text) {
-            console.warn("Gemini returned empty or blocked response:", data);
-            return "عذراً، لم أستطع صياغة رد حالياً. حاول سؤالاً آخر.";
+            return "عذراً، لم أستطع صياغة رد حالياً.";
         }
 
         return text;
@@ -207,3 +212,4 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
