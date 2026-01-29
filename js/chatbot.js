@@ -12,7 +12,28 @@ const STORE_DATA = {
         { name: "Fiction", nameAr: "روايات" }
     ],
     books: [
-        // ... (لائحة الكتب كما هي) ...
+        { title: "House of Sky Breath", author: "Lauren Asher", price: "$870", discount: "10% off", rating: 5, category: "Romance", status: "bestseller" },
+        { title: "Heartland Stars", author: "Lauren Asher", price: "$650", rating: 5, category: "Romance", status: "bestseller" },
+        { title: "Heavenly Bodies", author: "Lauren Asher", price: "$720", rating: 5, category: "Romance", status: "bestseller" },
+        { title: "His Saving Grace", author: "Lauren Asher", price: "$540", discount: "15% off", rating: 5, category: "Romance", status: "bestseller" },
+        { title: "My Dearest Darkest", author: "Lauren Asher", price: "$890", rating: 5, category: "Thriller", status: "bestseller" },
+        { title: "The Story of Success", author: "Lauren Asher", price: "$760", rating: 5, category: "Lifestyle", status: "new" },
+        { title: "Echoes of the Ancients", author: "Sarah Mitchell", price: "$580", rating: 4.5, category: "Fiction", status: "featured" },
+        { title: "The Midnight Garden", author: "Emily Rose", price: "$420", discount: "20% off", rating: 5, category: "Fiction", status: "featured" },
+        { title: "Shadow of the Serpent", author: "Lauren Asher", price: "$870", rating: 5, category: "Thriller", status: "featured" },
+        { title: "Whispering Winds", author: "Lauren Asher", price: "$870", rating: 5, category: "Fiction", status: "latest" },
+        { title: "The Forgotten Realm", author: "Lauren Asher", price: "$870", rating: 5, category: "Fiction", status: "latest" },
+        { title: "Moonlit Secrets", author: "Lauren Asher", price: "$870", rating: 5, category: "Romance", status: "latest" },
+        { title: "The Crystal Key", author: "Lauren Asher", price: "$870", rating: 5, category: "Fiction", status: "best-reviewed" },
+        { title: "Starlight Sonata", author: "Lauren Asher", price: "$870", rating: 5, category: "Romance", status: "best-reviewed" },
+        { title: "Tales of the Enchanted Forest", author: "Lauren Asher", price: "$870", rating: 5, category: "Fiction", status: "best-reviewed" },
+        { title: "The Phoenix Chronicles", author: "Lauren Asher", price: "$999", originalPrice: "$1666", rating: 5, category: "Fiction", status: "on-sale" },
+        { title: "Dreams of Avalon", author: "Lauren Asher", price: "$410", originalPrice: "$500", rating: 5, category: "Fiction", status: "on-sale" },
+        { title: "Legends of the Dragon Isles", author: "Lauren Asher", price: "$500", originalPrice: "$600", rating: 5, category: "Fiction", status: "on-sale" },
+        { title: "The Emerald Crown", author: "Unknown", price: "$2000", rating: 5, category: "Fiction", status: "wishlist" },
+        { title: "The Last Enchantment", author: "Unknown", price: "$400", rating: 5, category: "Fiction", status: "wishlist" },
+        { title: "Secrets of the Alchemist", author: "Unknown", price: "$870", rating: 5, category: "Fiction", status: "cart" },
+        { title: "Quest for the Lost City", author: "Unknown", price: "$600", rating: 5, category: "Fiction", status: "cart" }
     ],
     storeInfo: {
         phone: "+971 4 123 4567",
@@ -23,6 +44,7 @@ const STORE_DATA = {
         limitedOffer: "30% Discount on all items"
     }
 };
+
 
 let conversationHistory = [];
 let isProcessing = false;
@@ -244,3 +266,4 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
