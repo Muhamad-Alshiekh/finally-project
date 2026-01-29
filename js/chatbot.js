@@ -1,7 +1,8 @@
 // Chatbot Configuration - OpenRouter (DeepSeek R1)
-const OPENROUTER_API_KEY = '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';
-const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const MODEL = 'deepseek/deepseek-r1-0528:free';
+const GEMINI_API_KEY = 'AIzaSyAUVhDOcIeL1NvhR7lJndGxxSTs8Ns7iqs';
+const GEMINI_API_KEY_STORAGE_KEY = 'daralkutub_gemini_api_key';
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
 // Store Data - Books Catalog
 const STORE_DATA = {
@@ -328,3 +329,4 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
