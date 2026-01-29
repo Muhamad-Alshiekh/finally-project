@@ -1,4 +1,4 @@
-// Chatbot Configuration - OpenRouter (DeepSeek R1)
+// Chatbot Configuration - OpenRouter (gemini )
 const GEMINI_API_KEY = 'AIzaSyAUVhDOcIeL1NvhR7lJndGxxSTs8Ns7iqs';
 const GEMINI_API_KEY_STORAGE_KEY = 'daralkutub_gemini_api_key';
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
@@ -459,3 +459,4 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
