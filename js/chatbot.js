@@ -64,68 +64,88 @@ ${booksInfo}
 }
 
 // الدالة المحدثة للاتصال بالسيرفر مع فحص الأخطاء (التي طلبتها)
+// في chatbot.js - تحديث دالة callGeminiAPI
 async function callGeminiAPI(userMessage) {
-    const systemPrompt = buildSystemPrompt();
-    
-    // بناء الرسالة مع التاريخ
-    const messages = [
-        {
-            role: 'user',
-            parts: [{ text: `System instructions: ${systemPrompt}\n\nUser: ${userMessage}` }]
-        }
-    ];
+    // بناء prompt متكامل
+    const systemPrompt = `
+أنت مساعد ذكي لمكتبة "دار الكتب" 📚
+
+معلومات المكتبة:
+- الهاتف: ${STORE_DATA.storeInfo.phone}
+- العنوان: ${STORE_DATA.storeInfo.address}
+- التوصيل: ${STORE_DATA.storeInfo.shipping}
+- العروض الحالية: ${STORE_DATA.storeInfo.currentOffer}
+
+الكتب المتوفرة (${STORE_DATA.books.length} كتاب):
+${STORE_DATA.books.slice(0, 10).map(book => `• "${book.title}" - ${book.author} - ${book.price}`).join('\n')}
+${STORE_DATA.books.length > 10 ? `و ${STORE_DATA.books.length - 10} كتب أخرى...` : ''}
+
+التعليمات:
+1. تحدث بنفس لغة المستخدم (عربي/إنجليزي)
+2. كن ودوداً ومفيداً
+3. إذا سأل عن كتاب غير موجود، اقترح كتباً مشابهة
+4. لا تخترع كتباً غير موجودة في القائمة
+5. للإسئلة العامة عن المكتبة، استخدم معلومات التواصل أعلاه
+6. للإسئلة التقنية، اطلب الاتصال بـ ${STORE_DATA.storeInfo.phone}
+`;
 
     try {
-        console.log("📤 Sending request to API...");
-        
         const res = await fetch("/api/chat", {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
-                "X-Debug": "true"
+                "Cache-Control": "no-cache"
             },
             body: JSON.stringify({
-                contents: messages,
-                generationConfig: { 
-                    temperature: 0.7, 
-                    maxOutputTokens: 500 
+                contents: [{
+                    role: 'user',
+                    parts: [{ 
+                        text: `${systemPrompt}\n\nسؤال العميل: ${userMessage}\n\nالرجاء الرد بلغة العميل:`
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.8,  // أكثر إبداعاً
+                    maxOutputTokens: 800
                 }
             })
         });
 
-        const data = await res.json();
-        
-        console.log("📥 API Response:", { status: res.status, ok: res.ok });
-
+        // التحقق من حالة الاستجابة
         if (!res.ok) {
-            // رسائل خطأ ودية للمستخدم
-            let errorMsg = "حدث خطأ في الاتصال";
+            const errorData = await res.json().catch(() => ({}));
+            console.error("API Response Error:", errorData);
             
-            if (data.message?.includes("API key")) {
-                errorMsg = "⚠️ مشكلة في إعدادات السيرفر. الرجاء إبلاغ الإدارة.";
-            } else if (data.message) {
-                errorMsg = data.message;
+            // رسائل خطأ ودية
+            if (res.status === 429) {
+                throw new Error("⚠️ الكثير من الطلبات حالياً. يرجى المحاولة بعد قليل.");
+            } else if (res.status === 500) {
+                throw new Error("🔄 خادم الذكاء الاصطناعي غير متاح حالياً.");
+            } else {
+                throw new Error("❌ حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى.");
             }
-            
-            throw new Error(errorMsg);
         }
 
+        const data = await res.json();
+        
+        // استخراج النص من الاستجابة
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!text) {
-            return "عذراً، لم أستطع صياغة رد حالياً. يرجى المحاولة مرة أخرى.";
+            console.warn("Empty response from API:", data);
+            return "عذراً، لم أتلق رداً مناسباً. هل يمكنك إعادة صياغة سؤالك؟";
         }
 
         return text;
+
     } catch (error) {
-        console.error("Fetch Error Details:", error);
+        console.error("Chatbot API Error:", error);
         
-        // رسائل خطأ أكثر وضوحاً
-        if (error.message.includes("Failed to fetch")) {
-            throw new Error("❌ تعذر الاتصال بالسيرفر. تحقق من اتصال الإنترنت.");
+        // رسائل خطأ ملائمة للمستخدم
+        if (error.message.includes("Failed to fetch") || error.message.includes("Network")) {
+            return "🌐 تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت لديك.";
         }
         
-        throw error;
+        return error.message || "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.";
     }
 }
 
@@ -226,6 +246,7 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
 
 
