@@ -1,4 +1,4 @@
-// api/chat.js - النسخة النهائية
+// api/chat.js - النسخة المحدثة لـ gemini-2.5-flash
 export default async function handler(req, res) {
   // السماح فقط لـ POST requests
   if (req.method !== "POST") {
@@ -19,10 +19,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ استخدام gemini-pro (المجاني والفعّال)
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${key}`;
+    // ✅ استخدام gemini-2.5-flash (النموذج المجاني الصحيح)
+    const model = "gemini-2.5-flash"; // ⬅️ التغيير هنا
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`;
     
-    // تحضير الطلب
+    // تحضير الطلب - نفس الهيكل يعمل
     const requestBody = {
       contents: req.body.contents || [
         {
@@ -32,7 +33,7 @@ export default async function handler(req, res) {
       ],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 1000,  // زيادة للسرد الطويل
+        maxOutputTokens: 1000,
         topP: 0.8,
         topK: 40
       },
@@ -71,10 +72,13 @@ export default async function handler(req, res) {
     if (!response.ok) {
       console.error("Gemini API Error:", data);
       
+      // رسائل خطأ محددة للنموذج الجديد
       let errorMessage = "حدث خطأ في معالجة طلبك";
       if (data.error && data.error.message) {
         if (data.error.message.includes("quota")) {
           errorMessage = "تم تجاوز الحد اليومي للطلبات. يرجى المحاولة غداً.";
+        } else if (data.error.message.includes("model") || data.error.message.includes("not found")) {
+          errorMessage = `النموذج ${model} غير متوفر. جرب gemini-1.5-flash كبديل.`;
         } else if (data.error.message.includes("content")) {
           errorMessage = "الطلب يحتوي على محتوى غير مسموح به.";
         }
@@ -83,7 +87,8 @@ export default async function handler(req, res) {
       return res.status(response.status).json({
         error: "Gemini API Error",
         message: errorMessage,
-        details: data.error || data
+        details: data.error || data,
+        modelUsed: model // إضافة معلومات النموذج المستخدم
       });
     }
 
