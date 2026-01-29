@@ -1,8 +1,8 @@
-// Chatbot Configuration - OpenRouter (gemini )
+// Chatbot Configuration - gemini (gemini R1)
 const GEMINI_API_KEY = 'AIzaSyAUVhDOcIeL1NvhR7lJndGxxSTs8Ns7iqs';
 const GEMINI_API_KEY_STORAGE_KEY = 'daralkutub_gemini_api_key';
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash-latest';
 
 // Store Data - Books Catalog
 const STORE_DATA = {
@@ -187,6 +187,18 @@ function resolveGeminiApiKey() {
     return (GEMINI_API_KEY || '').trim();
 }
 
+function getGeminiModelFallbackList() {
+    const models = [
+        (GEMINI_MODEL || '').trim(),
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-pro-latest',
+        'gemini-1.0-pro',
+        'gemini-pro'
+    ].filter(Boolean);
+
+    return Array.from(new Set(models));
+}
+
 // Call Google Gemini API (generateContent)
 async function callGeminiAPI(userMessage) {
     const apiKey = resolveGeminiApiKey();
@@ -215,42 +227,60 @@ async function callGeminiAPI(userMessage) {
         parts: [{ text: userMessage }]
     });
 
-    const url = `${GEMINI_BASE_URL}/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
+    const requestBody = {
+        systemInstruction: {
+            parts: [{ text: systemPrompt }]
         },
-        body: JSON.stringify({
-            systemInstruction: {
-                parts: [{ text: systemPrompt }]
+        contents,
+        generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
+        }
+    };
+
+    const modelsToTry = getGeminiModelFallbackList();
+    let lastError;
+
+    for (const model of modelsToTry) {
+        const url = `${GEMINI_BASE_URL}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            contents,
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1024
+            body: JSON.stringify(requestBody)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const msg = data?.error?.message || `API error: ${response.status}`;
+            lastError = new Error(msg);
+
+            const looksLikeModelNotFound =
+                response.status === 404 &&
+                typeof msg === 'string' &&
+                (msg.includes('not found') || msg.includes('not supported'));
+
+            if (looksLikeModelNotFound) {
+                continue;
             }
-        })
-    });
 
-    const data = await response.json();
+            console.error('Gemini API Error:', data);
+            throw lastError;
+        }
 
-    if (!response.ok) {
-        console.error('Gemini API Error:', data);
-        throw new Error(data.error?.message || `API error: ${response.status}`);
+        const text = data?.candidates?.[0]?.content?.parts
+            ?.map(p => p?.text)
+            ?.filter(Boolean)
+            ?.join('\n');
+
+        if (text) return text;
+
+        lastError = new Error('Invalid response from Gemini API');
     }
 
-    const text = data?.candidates?.[0]?.content?.parts
-        ?.map(p => p?.text)
-        ?.filter(Boolean)
-        ?.join('\n');
-
-    if (!text) {
-        console.error('Invalid API Response:', data);
-        throw new Error('Invalid response from Gemini API');
-    }
-
-    return text;
+    throw lastError || new Error('No supported Gemini model found for this API key/project');
 }
 
 // Send message function
@@ -459,4 +489,3 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
