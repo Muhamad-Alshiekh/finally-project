@@ -1,6 +1,8 @@
 // Chatbot Configuration - gemini (gemini R1)
-const GEMINI_API_KEY = 'AIzaSyDA4hTrVrThlKmtQn8YIPJ-1GrErwy1qUg'; // مفتاح مجاني للاختبار
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const HF_TOKEN = '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';
+const HF_TOKEN_STORAGE_KEY = 'daralkutub_hf_token';
+const HF_INFERENCE_BASE_URL = 'https://api-inference.huggingface.co/models';
+const HF_DEFAULT_MODEL_ID = 'TinyLlama/TinyLlama-1.1B-Chat-v1.0';
 
 // Store Data - Books Catalog
 const STORE_DATA = {
@@ -146,40 +148,111 @@ ${booksInfo}
 4. التوصية بكتب`;
 }
 
-// دالة Gemini API البسيطة
-async function callGeminiAPI(userMessage) {
-    const systemPrompt = buildSystemPrompt();
-    
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{
-                    text: systemPrompt + "\n\nالعميل: " + userMessage + "\nالمساعد:"
-                }]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 500
-            }
-        })
+function resolveHuggingFaceToken() {
+    const fromWindow = (window.HF_TOKEN && String(window.HF_TOKEN).trim()) || '';
+    if (fromWindow) return fromWindow;
+
+    try {
+        const fromStorage = (localStorage.getItem(HF_TOKEN_STORAGE_KEY) || '').trim();
+        if (fromStorage) return fromStorage;
+    } catch (e) {
+        // Ignore storage access errors
+    }
+
+    return (HF_TOKEN || '').trim();
+}
+
+function getHuggingFaceModelFallbackList() {
+    const models = [
+        (HF_DEFAULT_MODEL_ID || '').trim(),
+        'google/gemma-2-2b-it',
+        'TinyLlama/TinyLlama-1.1B-Chat-v1.0',
+        'google/flan-t5-base',
+        'google/flan-t5-small'
+    ].filter(Boolean);
+
+    return Array.from(new Set(models));
+}
+
+function buildChatPrompt(systemPrompt, userMessage) {
+    let prompt = `${systemPrompt}\n\n`;
+
+    conversationHistory.forEach(msg => {
+        const label = msg.role === 'assistant' ? 'المساعد' : 'العميل';
+        prompt += `${label}: ${String(msg.content || '')}\n`;
     });
-    
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error('حدث خطأ في الخادم');
+
+    prompt += `العميل: ${userMessage}\nالمساعد:`;
+    return prompt;
+}
+
+async function callHuggingFaceAPI(userMessage) {
+    const token = resolveHuggingFaceToken();
+    if (!token) {
+        throw new Error('HF token not configured. Set window.HF_TOKEN or localStorage["daralkutub_hf_token"].');
     }
-    
-    const data = await response.json();
-    
-    if (data.candidates && data.candidates[0]) {
-        return data.candidates[0].content.parts[0].text;
-    } else {
-        throw new Error('لا توجد إجابة من المساعد');
+
+    const systemPrompt = buildSystemPrompt();
+    const prompt = buildChatPrompt(systemPrompt, userMessage);
+    const modelsToTry = getHuggingFaceModelFallbackList();
+    let lastError;
+
+    for (const modelId of modelsToTry) {
+        const url = `${HF_INFERENCE_BASE_URL}/${encodeURIComponent(modelId)}`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                inputs: prompt,
+                parameters: {
+                    max_new_tokens: 250,
+                    temperature: 0.7,
+                    return_full_text: false
+                },
+                options: {
+                    wait_for_model: true
+                }
+            })
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+            const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : `HTTP ${res.status}`;
+            lastError = new Error(msg);
+
+            const retryableModelIssue =
+                res.status === 404 ||
+                res.status === 403 ||
+                res.status === 503 ||
+                (typeof msg === 'string' &&
+                    (msg.includes('is currently loading') ||
+                        msg.includes('not found') ||
+                        msg.includes('does not exist') ||
+                        msg.includes('gated') ||
+                        msg.includes('permission')));
+
+            if (retryableModelIssue) {
+                continue;
+            }
+
+            throw lastError;
+        }
+
+        const text = Array.isArray(data)
+            ? (data[0]?.generated_text || data[0]?.summary_text)
+            : (data?.generated_text || data?.summary_text);
+
+        if (text) return String(text);
+
+        lastError = new Error('Invalid HuggingFace response format');
     }
+
+    throw lastError || new Error('No available HuggingFace model could answer (try a different model or check token permissions).');
 }
 
 // Send message function
@@ -204,8 +277,8 @@ async function sendMessage() {
     showTypingIndicator();
     
     try {
-        // استدعاء Gemini API
-        const response = await callGeminiAPI(userMessage);
+        // استدعاء HuggingFace API
+        const response = await callHuggingFaceAPI(userMessage);
         
         hideTypingIndicator();
         addMessageToUI(response, 'bot');
@@ -375,4 +448,3 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
