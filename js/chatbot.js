@@ -1,8 +1,8 @@
 // Chatbot Configuration - gemini (gemini R1)
-const GEMINI_API_KEY = 'AIzaSyAUVhDOcIeL1NvhR7lJndGxxSTs8Ns7iqs';
-const GEMINI_API_KEY_STORAGE_KEY = 'daralkutub_gemini_api_key';
-const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_MODEL = 'gemini-1.5-flash-latest';
+const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY_STORAGE_KEY = 'daralkutub_openrouter_api_key';
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
+const OPENROUTER_MODEL = 'google/gemini-2.0-flash-exp:free';
 
 // Store Data - Books Catalog
 const STORE_DATA = {
@@ -173,114 +173,80 @@ ${booksInfo}
 - If asked about a book we don't have, politely suggest similar books from our collection`;
 }
 
-function resolveGeminiApiKey() {
-    const fromWindow = (window.GEMINI_API_KEY && String(window.GEMINI_API_KEY).trim()) || '';
+function resolveOpenRouterApiKey() {
+    const fromWindow = (window.OPENROUTER_API_KEY && String(window.OPENROUTER_API_KEY).trim()) || '';
     if (fromWindow) return fromWindow;
 
     try {
-        const fromStorage = (localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY) || '').trim();
+        const fromStorage = (localStorage.getItem(OPENROUTER_API_KEY_STORAGE_KEY) || '').trim();
         if (fromStorage) return fromStorage;
     } catch (e) {
         // Ignore storage access errors
     }
 
-    return (GEMINI_API_KEY || '').trim();
+    return (OPENROUTER_API_KEY || '').trim();
 }
 
-function getGeminiModelFallbackList() {
-    const models = [
-        (GEMINI_MODEL || '').trim(),
-        'gemini-1.5-flash-latest',
-        'gemini-1.5-pro-latest',
-        'gemini-1.0-pro',
-        'gemini-pro'
-    ].filter(Boolean);
-
-    return Array.from(new Set(models));
-}
-
-// Call Google Gemini API (generateContent)
-async function callGeminiAPI(userMessage) {
-    const apiKey = resolveGeminiApiKey();
+async function callOpenRouterAPI(userMessage) {
+    const apiKey = resolveOpenRouterApiKey();
     if (!apiKey) {
         throw new Error(
-            'Gemini API key is not configured. Set window.GEMINI_API_KEY or localStorage["daralkutub_gemini_api_key"].'
+            'OpenRouter API key is not configured. Set window.OPENROUTER_API_KEY or localStorage["daralkutub_openrouter_api_key"].'
         );
     }
 
     const systemPrompt = buildSystemPrompt();
 
-    const contents = [];
+    const messages = [
+        {
+            role: 'system',
+            content: systemPrompt
+        }
+    ];
 
     // Add conversation history
     conversationHistory.forEach(msg => {
-        const role = msg.role === 'assistant' ? 'model' : 'user';
-        contents.push({
-            role,
-            parts: [{ text: String(msg.content || '') }]
+        messages.push({
+            role: msg.role,
+            content: msg.content
         });
     });
 
     // Add current user message
-    contents.push({
+    messages.push({
         role: 'user',
-        parts: [{ text: userMessage }]
+        content: userMessage
     });
 
-    const requestBody = {
-        systemInstruction: {
-            parts: [{ text: systemPrompt }]
+    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Dar al-Kutub Bookstore'
         },
-        contents,
-        generationConfig: {
+        body: JSON.stringify({
+            model: OPENROUTER_MODEL,
+            messages,
             temperature: 0.7,
-            maxOutputTokens: 1024
-        }
-    };
+            max_tokens: 1024
+        })
+    });
 
-    const modelsToTry = getGeminiModelFallbackList();
-    let lastError;
+    const data = await response.json();
 
-    for (const model of modelsToTry) {
-        const url = `${GEMINI_BASE_URL}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            const msg = data?.error?.message || `API error: ${response.status}`;
-            lastError = new Error(msg);
-
-            const looksLikeModelNotFound =
-                response.status === 404 &&
-                typeof msg === 'string' &&
-                (msg.includes('not found') || msg.includes('not supported'));
-
-            if (looksLikeModelNotFound) {
-                continue;
-            }
-
-            console.error('Gemini API Error:', data);
-            throw lastError;
-        }
-
-        const text = data?.candidates?.[0]?.content?.parts
-            ?.map(p => p?.text)
-            ?.filter(Boolean)
-            ?.join('\n');
-
-        if (text) return text;
-
-        lastError = new Error('Invalid response from Gemini API');
+    if (!response.ok) {
+        console.error('OpenRouter API Error:', data);
+        throw new Error(data.error?.message || `API error: ${response.status}`);
     }
 
-    throw lastError || new Error('No supported Gemini model found for this API key/project');
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid API Response:', data);
+        throw new Error('Invalid response from OpenRouter API');
+    }
+
+    return data.choices[0].message.content;
 }
 
 // Send message function
@@ -311,8 +277,8 @@ async function sendMessage() {
         // Show typing indicator
         showTypingIndicator();
 
-        // Call Gemini API
-        const response = await callGeminiAPI(message);
+        // Call OpenRouter API
+        const response = await callOpenRouterAPI(message);
         
         // Remove typing indicator
         hideTypingIndicator();
