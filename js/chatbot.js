@@ -17,7 +17,94 @@ const STORE_DATA = {
         { name: "Health", nameAr: "صحة" },
         { name: "Fiction", nameAr: "روايات" }
     ],
-    books: [],
+    books: [
+        {
+            id: 1,
+            title: "Arabian Nights",
+            titleAr: "ألف ليلة وليلة",
+            author: "Various Authors",
+            price: "45 AED",
+            originalPrice: "60 AED",
+            discount: "25% OFF",
+            category: "Fiction",
+            rating: 4.8,
+            status: "bestseller"
+        },
+        {
+            id: 2,
+            title: "Desert Rose Recipes",
+            titleAr: "وصفات وردة الصحراء",
+            author: "Fatima Al-Mansouri",
+            price: "65 AED",
+            category: "Cooking",
+            rating: 4.5,
+            status: "new"
+        },
+        {
+            id: 3,
+            title: "Love in Dubai",
+            titleAr: "حب في دبي",
+            author: "Ahmed Hassan",
+            price: "55 AED",
+            originalPrice: "75 AED",
+            discount: "30% OFF",
+            category: "Romance",
+            rating: 4.3,
+            status: "on-sale"
+        },
+        {
+            id: 4,
+            title: "Healthy Arabian Lifestyle",
+            titleAr: "نمط الحياة العربي الصحي",
+            author: "Dr. Layla Mohammed",
+            price: "80 AED",
+            category: "Health",
+            rating: 4.7,
+            status: "bestseller"
+        },
+        {
+            id: 5,
+            title: "The Oasis Mystery",
+            titleAr: "لغز الواحة",
+            author: "Khalid Al-Farsi",
+            price: "50 AED",
+            category: "Thriller",
+            rating: 4.6,
+            status: "new"
+        },
+        {
+            id: 6,
+            title: "Stars of the Desert",
+            titleAr: "نجوم الصحراء",
+            author: "Sarah Al-Jabri",
+            price: "70 AED",
+            originalPrice: "95 AED",
+            discount: "30% OFF",
+            category: "Sci-fi",
+            rating: 4.4,
+            status: "on-sale"
+        },
+        {
+            id: 7,
+            title: "Emirati Cuisine Mastery",
+            titleAr: "إتقان المطبخ الإماراتي",
+            author: "Mariam Al-Ketbi",
+            price: "90 AED",
+            category: "Recipe",
+            rating: 4.9,
+            status: "bestseller"
+        },
+        {
+            id: 8,
+            title: "Modern Arabian Living",
+            titleAr: "العيش العربي الحديث",
+            author: "Omar Rashid",
+            price: "60 AED",
+            category: "Lifestyle",
+            rating: 4.2,
+            status: "new"
+        }
+    ],
     storeInfo: {
         phone: "+971 4 123 4567",
         email: "info@daralkutub.com",
@@ -30,6 +117,9 @@ const STORE_DATA = {
 
 // Conversation history
 let conversationHistory = [];
+
+// Flag to prevent multiple simultaneous requests
+let isProcessing = false;
 
 // Initialize chatbot when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -83,82 +173,116 @@ ${booksInfo}
 - If asked about a book we don't have, politely suggest similar books from our collection`;
 }
 
-// Call OpenRouter API (DeepSeek R1)
-async function callOpenRouterAPI(userMessage) {
+function resolveGeminiApiKey() {
+    const fromWindow = (window.GEMINI_API_KEY && String(window.GEMINI_API_KEY).trim()) || '';
+    if (fromWindow) return fromWindow;
+
+    try {
+        const fromStorage = (localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY) || '').trim();
+        if (fromStorage) return fromStorage;
+    } catch (e) {
+        // Ignore storage access errors
+    }
+
+    return (GEMINI_API_KEY || '').trim();
+}
+
+// Call Google Gemini API (generateContent)
+async function callGeminiAPI(userMessage) {
+    const apiKey = resolveGeminiApiKey();
+    if (!apiKey) {
+        throw new Error(
+            'Gemini API key is not configured. Set window.GEMINI_API_KEY or localStorage["daralkutub_gemini_api_key"].'
+        );
+    }
+
     const systemPrompt = buildSystemPrompt();
-    
-    // Build messages array for OpenRouter
-    const messages = [
-        {
-            role: 'system',
-            content: systemPrompt
-        }
-    ];
-    
+
+    const contents = [];
+
     // Add conversation history
     conversationHistory.forEach(msg => {
-        messages.push({
-            role: msg.role,
-            content: msg.content
+        const role = msg.role === 'assistant' ? 'model' : 'user';
+        contents.push({
+            role,
+            parts: [{ text: String(msg.content || '') }]
         });
     });
-    
+
     // Add current user message
-    messages.push({
+    contents.push({
         role: 'user',
-        content: userMessage
+        parts: [{ text: userMessage }]
     });
-    
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+
+    const url = `${GEMINI_BASE_URL}/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Dar al-Kutub Bookstore'
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            model: MODEL,
-            messages: messages,
-            temperature: 0.7,
-            max_tokens: 1024
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            },
+            contents,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1024
+            }
         })
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
-        console.error('OpenRouter API Error:', data);
+        console.error('Gemini API Error:', data);
         throw new Error(data.error?.message || `API error: ${response.status}`);
     }
-    
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+
+    const text = data?.candidates?.[0]?.content?.parts
+        ?.map(p => p?.text)
+        ?.filter(Boolean)
+        ?.join('\n');
+
+    if (!text) {
         console.error('Invalid API Response:', data);
-        throw new Error('Invalid response from OpenRouter API');
+        throw new Error('Invalid response from Gemini API');
     }
-    
-    return data.choices[0].message.content;
+
+    return text;
 }
 
 // Send message function
 async function sendMessage() {
     const input = document.getElementById('chatbot-input');
+    const sendBtn = document.getElementById('chatbot-send');
     const message = input.value.trim();
 
     if (!message) return;
+    if (isProcessing) {
+        console.log('Still processing previous message...');
+        return;
+    }
 
-    // Clear input
-    input.value = '';
-
-    // Add user message to UI
-    addMessageToUI(message, 'user');
-
-    // Show typing indicator
-    showTypingIndicator();
-
+    // Set processing flag
+    isProcessing = true;
+    
     try {
-        // Call OpenRouter API (DeepSeek R1)
-        const response = await callOpenRouterAPI(message);
+        sendBtn.disabled = true;
+        input.disabled = true;
+
+        // Clear input
+        input.value = '';
+
+        // Add user message to UI
+        addMessageToUI(message, 'user');
+
+        // Show typing indicator
+        showTypingIndicator();
+
+        // Call Gemini API
+        const response = await callGeminiAPI(message);
         
         // Remove typing indicator
         hideTypingIndicator();
@@ -182,6 +306,12 @@ async function sendMessage() {
         const errorMsg = error.message || 'Unknown error';
         addMessageToUI(`عذراً، حدث خطأ: ${errorMsg} / Sorry, error: ${errorMsg}`, 'bot');
     }
+    
+    // Always reset - outside try/catch to ensure it runs
+    isProcessing = false;
+    sendBtn.disabled = false;
+    input.disabled = false;
+    input.focus();
 }
 
 // Create chatbot UI elements
@@ -329,4 +459,3 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
