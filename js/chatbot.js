@@ -211,17 +211,18 @@ function createChatbotUI() {
                 <button id="chatbot-close">×</button>
             </div>
             <div id="chatbot-messages" class="chatbot-messages">
-                 <div class="chat-message bot-message">
+                <div class="chat-message bot-message">
                     <div class="message-content">
                         <p>مرحباً بك في دار الكتب! 📚 كيف أساعدك اليوم؟</p>
                     </div>
                 </div>
             </div>
             <div class="chatbot-input-container">
-                <input type="text" id="chatbot-input" placeholder="اكتب رسالتك..." autocomplete="off">
-                <button id="chatbot-send">➤</button>
+                <input type="text" id="chatbot-input" class="chatbot-input" placeholder="اكتب رسالتك..." autocomplete="off">
+                <button id="chatbot-send" class="chatbot-send">➤</button>
             </div>
         </div>`;
+    
     document.body.insertAdjacentHTML('beforeend', chatbotHTML);
 }
 
@@ -266,4 +267,5 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
