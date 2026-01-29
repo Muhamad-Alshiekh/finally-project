@@ -1,4 +1,4 @@
-// بيانات المتجر والكتب - تم الحفاظ عليها بالكامل من كودك الأصلي
+// بيانات المتجر والكتب - تم الحفاظ عليها من كودك الأصلي
 const STORE_DATA = {
     storeName: "Dar al-Kutub (دار الكتب)",
     categories: [
@@ -53,29 +53,20 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
 });
 
-// بناء التعليمات للـ AI بناءً على بيانات المتجر
+// بناء الـ Prompt التعليمي للـ AI
 function buildSystemPrompt() {
-    const booksInfo = STORE_DATA.books.map(book => {
-        let info = `- "${book.title}" by ${book.author}, Price: ${book.price}`;
-        if (book.discount) info += ` (${book.discount})`;
-        return info;
-    }).join('\n');
-
-    return `You are a helpful assistant for "${STORE_DATA.storeName}". 
-    Store Info: Phone ${STORE_DATA.storeInfo.phone}, Address: ${STORE_DATA.storeInfo.address}.
-    Available Books:
-    ${booksInfo}
-    Guidelines: 
-    1. Recommend books ONLY from the list above. 
-    2. Answer in Arabic or English based on the user. 
-    3. Be concise.`;
+    const booksInfo = STORE_DATA.books.map(book => `- "${book.title}" by ${book.author}, Price: ${book.price}`).join('\n');
+    return `أنت مساعد ذكي لمكتبة "${STORE_DATA.storeName}". 
+معلومات التواصل: ${STORE_DATA.storeInfo.phone}.
+قائمة الكتب المتاحة حالياً:
+${booksInfo}
+تعليمات: تحدث بالعربية أو الإنجليزية، كن ودوداً ومختصراً، وركز فقط على الكتب المتوفرة لدينا.`;
 }
 
-// الدالة الجديدة للاتصال بـ Vercel (بدون الحاجة لمفاتيح هنا)
+// الدالة المحدثة للاتصال بالسيرفر مع فحص الأخطاء (التي طلبتها)
 async function callGeminiAPI(userMessage) {
     const systemPrompt = buildSystemPrompt();
 
-    // تجهيز السجل بصيغة Gemini
     const contents = conversationHistory.map(msg => ({
         role: msg.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: String(msg.content || '') }]
@@ -86,25 +77,40 @@ async function callGeminiAPI(userMessage) {
         parts: [{ text: String(userMessage || '') }]
     });
 
-    const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            contents,
-            generationConfig: { temperature: 0.7, maxOutputTokens: 400 }
-        })
-    });
+    try {
+        const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents,
+                generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+            })
+        });
 
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Server Error");
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error("Vercel Error:", data);
+            throw new Error(data.error || "خطأ في السيرفر");
+        }
+
+        // فحص دقيق لمكان النص في رد Gemini
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!text) {
+            console.warn("Gemini returned empty or blocked response:", data);
+            return "عذراً، لم أستطع صياغة رد حالياً. حاول سؤالاً آخر.";
+        }
+
+        return text;
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        throw error;
     }
-
-    const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
 }
 
+// دالة إرسال الرسالة والتعامل مع الـ UI
 async function sendMessage() {
     const input = document.getElementById('chatbot-input');
     const sendBtn = document.getElementById('chatbot-send');
@@ -129,9 +135,8 @@ async function sendMessage() {
 
         if (conversationHistory.length > 6) conversationHistory = conversationHistory.slice(-6);
     } catch (error) {
-        console.error(error);
         hideTypingIndicator();
-        addMessageToUI("عذراً، حدث خطأ في النظام. حاول مجدداً.", "bot");
+        addMessageToUI("عذراً، حدث خطأ فني. يرجى التأكد من اتصال الإنترنت أو إعدادات السيرفر.", 'bot');
     }
 
     isProcessing = false;
@@ -139,8 +144,7 @@ async function sendMessage() {
     input.focus();
 }
 
-// --- وظائف الـ UI (بقيت كما هي لتناسب تصميمك) ---
-
+// --- دوال واجهة المستخدم (تأكد أنها مطابقة لملف الـ CSS الخاص بك) ---
 function createChatbotUI() {
     const chatbotHTML = `
         <button id="chatbot-toggle" class="chatbot-toggle">💬</button>
@@ -150,14 +154,14 @@ function createChatbotUI() {
                 <button id="chatbot-close">×</button>
             </div>
             <div id="chatbot-messages" class="chatbot-messages">
-                <div class="chat-message bot-message">
+                 <div class="chat-message bot-message">
                     <div class="message-content">
-                        <p>مرحباً! أنا مساعد دار الكتب 📚 كيف يمكنني مساعدتك اليوم؟</p>
+                        <p>مرحباً بك في دار الكتب! 📚 كيف أساعدك اليوم؟</p>
                     </div>
                 </div>
             </div>
             <div class="chatbot-input-container">
-                <input type="text" id="chatbot-input" placeholder="Type your message..." autocomplete="off">
+                <input type="text" id="chatbot-input" placeholder="اكتب رسالتك..." autocomplete="off">
                 <button id="chatbot-send">➤</button>
             </div>
         </div>`;
