@@ -48,10 +48,6 @@ const STORE_DATA = {
 let conversationHistory = [];
 let isProcessing = false;
 
-document.addEventListener('DOMContentLoaded', function() {
-    createChatbotUI();
-    setupEventListeners();
-});
 
 / أضف هذه الدالة في chatbot.js (بعد تعريف STORE_DATA)
 async function checkModelAvailability() {
@@ -74,6 +70,7 @@ async function checkModelAvailability() {
     console.error("Failed to check model:", error);
   }
 }
+
 
 // استدعها عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
@@ -277,6 +274,7 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
 
 
