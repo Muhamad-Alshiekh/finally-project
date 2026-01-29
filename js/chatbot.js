@@ -66,51 +66,65 @@ ${booksInfo}
 // الدالة المحدثة للاتصال بالسيرفر مع فحص الأخطاء (التي طلبتها)
 async function callGeminiAPI(userMessage) {
     const systemPrompt = buildSystemPrompt();
-
-    // نضع التعليمات كأول رسالة من المستخدم لضمان قبولها في كل الإصدارات
-    const contents = [
+    
+    // بناء الرسالة مع التاريخ
+    const messages = [
         {
             role: 'user',
-            parts: [{ text: `SYSTEM INSTRUCTIONS: ${systemPrompt}\n\nUSER MESSAGE: ${userMessage}` }]
+            parts: [{ text: `System instructions: ${systemPrompt}\n\nUser: ${userMessage}` }]
         }
     ];
 
-    // إذا كان هناك تاريخ للمحادثة، نضيفه هنا
-    if (conversationHistory.length > 0) {
-        conversationHistory.forEach(msg => {
-            contents.push({
-                role: msg.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: msg.content }]
-            });
-        });
-    }
-
     try {
+        console.log("📤 Sending request to API...");
+        
         const res = await fetch("/api/chat", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "X-Debug": "true"
+            },
             body: JSON.stringify({
-                contents, // نرسل المحتويات فقط هنا
-                generationConfig: { temperature: 0.7, maxOutputTokens: 500 }
+                contents: messages,
+                generationConfig: { 
+                    temperature: 0.7, 
+                    maxOutputTokens: 500 
+                }
             })
         });
 
         const data = await res.json();
+        
+        console.log("📥 API Response:", { status: res.status, ok: res.ok });
 
         if (!res.ok) {
-            console.error("Vercel Error:", data);
-            throw new Error(data.error || "خطأ في السيرفر");
+            // رسائل خطأ ودية للمستخدم
+            let errorMsg = "حدث خطأ في الاتصال";
+            
+            if (data.message?.includes("API key")) {
+                errorMsg = "⚠️ مشكلة في إعدادات السيرفر. الرجاء إبلاغ الإدارة.";
+            } else if (data.message) {
+                errorMsg = data.message;
+            }
+            
+            throw new Error(errorMsg);
         }
 
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!text) {
-            return "عذراً، لم أستطع صياغة رد حالياً.";
+            return "عذراً، لم أستطع صياغة رد حالياً. يرجى المحاولة مرة أخرى.";
         }
 
         return text;
     } catch (error) {
-        console.error("Fetch Error:", error);
+        console.error("Fetch Error Details:", error);
+        
+        // رسائل خطأ أكثر وضوحاً
+        if (error.message.includes("Failed to fetch")) {
+            throw new Error("❌ تعذر الاتصال بالسيرفر. تحقق من اتصال الإنترنت.");
+        }
+        
         throw error;
     }
 }
@@ -212,5 +226,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
 
