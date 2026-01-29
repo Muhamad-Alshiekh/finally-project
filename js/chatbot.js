@@ -230,11 +230,38 @@ function createChatbotUI() {
 function setupEventListeners() {
     const container = document.getElementById('chatbot-container');
     const toggle = document.getElementById('chatbot-toggle');
+    const input = document.getElementById('chatbot-input');
     
-    toggle.onclick = () => { container.classList.add('active'); toggle.style.display = 'none'; };
-    document.getElementById('chatbot-close').onclick = () => { container.classList.remove('active'); toggle.style.display = 'flex'; };
+    toggle.onclick = () => { 
+        container.classList.add('active'); 
+        toggle.style.display = 'none'; 
+        
+        // 🔥 هذا هو الحل: تأخير التركيز
+        setTimeout(() => {
+            input.focus();
+            input.removeAttribute('disabled');
+            console.log("✅ Input focused and enabled");
+        }, 100);
+    };
+    
+    document.getElementById('chatbot-close').onclick = () => { 
+        container.classList.remove('active'); 
+        toggle.style.display = 'flex'; 
+    };
+    
     document.getElementById('chatbot-send').onclick = sendMessage;
-    document.getElementById('chatbot-input').onkeypress = (e) => e.key === 'Enter' && sendMessage();
+    
+    input.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // منع السلوك الافتراضي
+            sendMessage();
+        }
+    };
+    
+    // تأكد أن الحقل غير معطل
+    input.removeAttribute('disabled');
+    input.style.pointerEvents = 'auto';
+    input.style.opacity = '1';
 }
 
 // ✅ باقي الدوال المساعدة
@@ -267,5 +294,6 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
 
