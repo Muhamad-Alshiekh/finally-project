@@ -53,6 +53,37 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
 });
 
+/ أضف هذه الدالة في chatbot.js (بعد تعريف STORE_DATA)
+async function checkModelAvailability() {
+  try {
+    const response = await fetch("/api/debug");
+    const data = await response.json();
+    
+    console.log("Model check result:", {
+      model: data.apiTest?.model,
+      success: data.apiTest?.success,
+      status: data.apiTest?.status
+    });
+    
+    if (data.apiTest?.success) {
+      console.log(`✅ النموذج ${data.apiTest.model} يعمل بشكل صحيح`);
+    } else {
+      console.error(`❌ مشكلة في النموذج: ${data.apiTest?.error || data.apiTest?.data?.error?.message}`);
+    }
+  } catch (error) {
+    console.error("Failed to check model:", error);
+  }
+}
+
+// استدعها عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  createChatbotUI();
+  setupEventListeners();
+  
+  // تحقق من النموذج بعد 1 ثانية
+  setTimeout(checkModelAvailability, 1000);
+});
+
 // بناء الـ Prompt التعليمي للـ AI
 function buildSystemPrompt() {
     const booksInfo = STORE_DATA.books.map(book => `- "${book.title}" by ${book.author}, Price: ${book.price}`).join('\n');
@@ -246,6 +277,7 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
 
 
