@@ -1,8 +1,7 @@
 // Chatbot Configuration - gemini (gemini R1)
-const OPENROUTER_API_KEY = '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';
-const OPENROUTER_API_KEY_STORAGE_KEY = 'daralkutub_openrouter_api_key';
-const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const OPENROUTER_MODEL = 'google/gemini-2.0-flash-thinking-exp:free'; 
+const GROQ_API_KEY  = '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';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'llama-3.2-3b-preview'; 
 
 // Store Data - Books Catalog
 const STORE_DATA = {
@@ -455,6 +454,7 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
 
 
 
